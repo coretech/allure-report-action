@@ -1,65 +1,106 @@
-name: 'Allure Report with history'
-description: 'Generate Allure Report with history'
-author: 'simple-elf'
+name: "Allure Report with history"
+description: "Generate Allure Report with history"
 branding:
-  icon: 'layout'
-  color: 'green'
+  icon: "layout"
+  color: "green"
 inputs:
   allure_results:
-    description: 'Allure test result data dir'
+    description: "Allure test result data dir"
     required: true
-    default: 'allure-results'
+    default: "allure-results"
   allure_report:
-    description: 'Allure report target dir'
+    description: "Allure report target dir"
     required: true
-    default: 'allure-report'
+    default: "allure-report"
   gh_pages:
-    description: 'Folder with gh-pages branch'
+    description: "Folder with gh-pages branch"
     required: true
-    default: 'gh-pages'
+    default: "gh-pages"
   allure_history:
-    description: 'Folder for allure history'
+    description: "Folder for allure history"
     required: true
-    default: 'allure-history'
+    default: "allure-history"
   subfolder:
-    description: 'subfolder'
+    description: "subfolder"
     required: false
-    default: ''
+    default: ""
   keep_reports:
-    description: 'Keep X last reports'
+    description: "Keep X last reports"
     required: false
-    default: '20'
+    default: "20"
   github_run_num:
-    description: 'GitHub Actions build number'
+    description: "GitHub Actions build number"
     required: true
     default: ${{ github.run_number }}
   github_run_id:
-    description: 'GitHub Actions run id'
+    description: "GitHub Actions run id"
     required: true
     default: ${{ github.run_id }}
   github_repo:
-    description: 'GitHub repository'
+    description: "GitHub repository"
     required: true
     default: ${{ github.repository }}
   github_repo_owner:
-    description: 'GitHub repository owner'
+    description: "GitHub repository owner"
     required: true
     default: ${{ github.repository_owner }}
   github_tests_repo:
-    description: 'GitHub repository where test are run'
+    description: "GitHub repository where test are run"
     required: true
     default: ${{ github.repository }}
   report_url:
-    description: 'Use a custom URL instead of *.github.io'
+    description: "Use a custom URL instead of *.github.io"
     required: false
-    default: ''
+    default: ""
   github_server_url:
-    description: 'GitHub server URL'
+    description: "GitHub server URL"
     required: true
     default: ${{ github.server_url }}
   report_name:
-    description: 'Allure report name/title'
+    description: "Allure report name/title"
     required: false
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: "composite"
+  steps:
+    - name: Ensure required packages are installed
+      shell: bash
+      run: |
+        set -e
+
+        RELEASE="2.32.0"
+        ALLURE_REPO="https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline"
+        ALLURE_DIR="allure-$RELEASE"
+
+        for pkg in wget unzip openjdk-8-jre; do
+          if ! command -v $pkg &> /dev/null; then
+            echo "$pkg not found. Installing..."
+            sudo apt-get update
+            sudo apt-get install -y $pkg
+          else
+            echo "$pkg is already installed: $($pkg --version || true)"
+          fi
+        done
+
+        echo "Using Java: $(java -version 2>&1 | head -n 1)"
+
+        if [ ! -d "$ALLURE_DIR" ]; then
+          wget -q -O "/tmp/allure-$RELEASE.tgz" "$ALLURE_REPO/$RELEASE/allure-commandline-$RELEASE.tgz"
+          tar -xf "/tmp/allure-$RELEASE.tgz"
+          chmod -R +x "$ALLURE_DIR/bin"
+          rm "/tmp/allure-$RELEASE.tgz"
+        else
+          echo "Allure has already existed in $ALLURE_DIR"
+        fi
+
+        if [[ ":$PATH:" != *":$PWD/$ALLURE_DIR/bin:"* ]]; then
+          export PATH="$PATH:$PWD/$ALLURE_DIR/bin"
+          echo 'export PATH="$PATH:'"$PWD/$ALLURE_DIR/bin"'"' >> ~/.bashrc
+        fi
+
+        allure --version
+
+    - name: Execute script
+      shell: bash
+      id: script
+      run: |
+        bash "${{ github.action_path }}/script.sh"
