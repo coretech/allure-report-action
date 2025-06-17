@@ -99,6 +99,24 @@ runs:
 
         allure --version
 
+    - name: Define variables
+      shell: bash
+      run: |
+        echo "INPUT_ALLURE_RESULTS=${{ inputs.allure_results }}" >> $GITHUB_ENV
+        echo "INPUT_ALLURE_REPORT=${{ inputs.allure_report }}" >> $GITHUB_ENV
+        echo "INPUT_GH_PAGES=${{ inputs.gh_pages }}" >> $GITHUB_ENV
+        echo "INPUT_ALLURE_HISTORY=${{ inputs.allure_history }}" >> $GITHUB_ENV
+        echo "INPUT_SUBFOLDER=${{ inputs.subfolder }}" >> $GITHUB_ENV
+        echo "INPUT_KEEP_REPORTS=${{ inputs.keep_reports }}" >> $GITHUB_ENV
+        echo "INPUT_GITHUB_RUN_NUM=${{ inputs.github_run_num }}" >> $GITHUB_ENV
+        echo "INPUT_GITHUB_RUN_ID=${{ inputs.github_run_id }}" >> $GITHUB_ENV
+        echo "INPUT_GITHUB_REPO=${{ inputs.github_repo }}" >> $GITHUB_ENV
+        echo "INPUT_GITHUB_REPO_OWNER=${{ inputs.github_repo_owner }}" >> $GITHUB_ENV
+        echo "INPUT_GITHUB_TESTS_REPO=${{ inputs.github_tests_repo }}" >> $GITHUB_ENV
+        echo "INPUT_REPORT_URL=${{ inputs.report_url }}" >> $GITHUB_ENV
+        echo "INPUT_GITHUB_SERVER_URL=${{ inputs.github_server_url }}" >> $GITHUB_ENV
+        echo "INPUT_REPORT_NAME=${{ inputs.report_name }}" >> $GITHUB_ENV
+
     - name: Execute script
       shell: bash
       id: script
